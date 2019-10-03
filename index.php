@@ -33,29 +33,38 @@ $keranjang = array();
         constructor(name, price){
             this.name = name;
             this.price = price;
+            this.qty = 1;
         }
     }
 
     var items = [];
+    var keranjang_total = 0;
 
     function add_item(name, price) {
+        for (var i=items.length-1; i>=0; i--) {
+            if (items[i].name === name) {
+                items[i].qty++;
+                update_keranjang();
+                return
+            }
+        }
         items.push(new Item(name, price));
-        console.log(items);
         update_keranjang();
     }
 
     function remove_item(name) {
-        var search_term = name;
-
         for (var i=items.length-1; i>=0; i--) {
-            if (items[i].name === search_term) {
+            if (items[i].name === name) {
                 items.splice(i, 1);
+                update_keranjang();
                 return items;
             }
         }
+        update_keranjang();
     }
 
     function update_keranjang(){
+        var total = 0;
         var table = document.getElementById('data_keranjang');
         table.innerHTML = "";
         for(var i=0; i<items.length; i++){
@@ -63,10 +72,36 @@ $keranjang = array();
             var cell = row.insertCell(0);
             cell.innerHTML = items[i].name;
             var cell = row.insertCell(1);
-            cell.innerHTML = items[i].price;
+            cell.innerHTML = items[i].qty;
             var cell = row.insertCell(2);
-            cell.innerHTML = "<button>Hapus</button>";
+            cell.innerHTML = "Rp"+items[i].price * items[i].qty+",-";
+            var cell = row.insertCell(3);
+            var b = 'onclick=remove_item("' + items[i].name + '")';
+            cell.innerHTML = "<button " + b + ">Hapus</button>";
+
+            total += items[i].price * items[i].qty;
         }
+        keranjang_total = total;
+
+        var total_harga = document.getElementById("total_harga");
+        total_harga.innerHTML = "Rp"+total+",-";
+
+        var form_bayar = document.getElementById("form_bayar");
+        form_bayar.innerHTML = "";
+        var form = "";
+        for(var i=0;i < items.length; i++){
+            console.log(items[i].name);
+            form += "<input type='hidden' name='keranjang[items][" + i + "][name]' value='" + items[i].name + "'>";
+            form += "<input type='hidden' name='keranjang[items][" + i + "][price]' value='" + items[i].price + "'>";
+            form += "<input type='hidden' name='keranjang[items][" + i + "][qty]' value='" + items[i].qty + "'>";
+        }
+        form += '<input type="hidden" name="keranjang[payment][total]" value=' + keranjang_total + '>';
+        form += '<input type="submit" value="Bayar">';
+        form_bayar.innerHTML = form;
+    }
+
+    function bayar(){
+        
     }
 </script>
 
@@ -100,12 +135,23 @@ $keranjang = array();
                     <thead>
                     <tr>
                         <td>Nama Barang</td>
+                        <td>Jumlah Barang</td>
                         <td>Subtotal</td>
                         <td>Hapus</td>
                     </tr>
                     </thead>
                     <tbody id="data_keranjang">
                     </tbody>
+                    <tfoot>
+                        <tr>
+                            <td></td>
+                            <td>Total</td>
+                            <td id="total_harga">Rp0</td>
+                            <td>
+                                <form id="form_bayar" action="pembayaran/" method="post"></form>
+                            </td>
+                        </tr>
+                    </tfoot>
                 </table>
             </td>
         </tr>
